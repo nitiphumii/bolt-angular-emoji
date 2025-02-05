@@ -1,0 +1,86 @@
+<div class="container" [ngClass]="{ 'dark-mode': isDarkMode }">
+  <!-- Existing content remains unchanged -->
+  
+  <!-- Add falling items container -->
+  <div class="falling-container">
+    <div *ngFor="let item of fallingItems" 
+         class="falling-item" 
+         [ngClass]="{'dragon': item.emoji === '🐉', 'cat': item.emoji === '🐱'}"
+         [style.left.%]="item.left"
+         [style.animation-duration.s]="item.duration"
+         [style.animation-delay.s]="item.delay">
+      <span class="item-emoji">{{item.emoji}}</span>
+    </div>
+  </div>
+
+  <nav class="navbar">
+    <div class="logo">Bolt Tech</div>
+    <div class="nav-links">
+      <a href="#" class="nav-link">หน้าแรก</a>
+      <a href="#" class="nav-link">เกี่ยวกับ</a>
+      <a href="#" class="nav-link">ผลงาน</a>
+      <a href="#" class="nav-link">ติดต่อ</a>
+      <button class="theme-toggle" (click)="toggleDarkMode()">
+        <span class="material-symbols-outlined">
+          {{ isDarkMode ? 'partly_cloudy_day' : 'partly_cloudy_night' }}
+        </span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="content">
+    <h1 class="filter-btn">ผลงานของฉัน</h1>
+    <p class="subtitle">
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
+      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+    </p>
+
+    <div class="filters">
+      <button class="filter-btn active">All</button>
+      <button class="filter-btn">Web</button>
+      <button class="filter-btn">Mobile</button>
+      <button class="filter-btn">Design</button>
+    </div>
+
+    <div class="project-grid">
+      <div class="project-card">
+        <div class="project-image">E-commerce Project</div>
+        <div class="project-content">
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et...</p>
+          <div class="tech-stack">
+            <span class="tech-tag">React</span>
+            <span class="tech-tag">Node.js</span>
+            <span class="tech-tag">MongoDB</span>
+            <span class="tech-tag">Tailwind CSS</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-image">Task Management</div>
+        <div class="project-content">
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et...</p>
+          <div class="tech-stack">
+            <span class="tech-tag">React</span>
+            <span class="tech-tag">Firebase</span>
+            <span class="tech-tag">Redux</span>
+            <span class="tech-tag">Material-UI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-image">Travel Website</div>
+        <div class="project-content">
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et...</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Next.js</span>
+            <span class="tech-tag">Prisma</span>
+            <span class="tech-tag">PostgreSQL</span>
+            <span class="tech-tag">Framer Motion</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
