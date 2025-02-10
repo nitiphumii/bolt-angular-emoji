@@ -1,84 +1,129 @@
 <div class="container" [ngClass]="{ 'dark-mode': isDarkMode }">
-  <!-- Existing content remains unchanged -->
-  
-  <!-- Add falling items container -->
-  <div class="falling-container">
-    <div *ngFor="let item of fallingItems" 
-         class="falling-item" 
-         [ngClass]="{'dragon': item.emoji === '🐉', 'cat': item.emoji === '🐱'}"
-         [style.left.%]="item.left"
-         [style.animation-duration.s]="item.duration"
-         [style.animation-delay.s]="item.delay">
-      <span class="item-emoji">{{item.emoji}}</span>
-    </div>
-  </div>
-
   <nav class="navbar">
-    <div class="logo">Bolt Tech</div>
+    <div class="logo">Sales Analytics</div>
     <div class="nav-links">
-      <a href="#" class="nav-link">หน้าแรก</a>
-      <a href="#" class="nav-link">เกี่ยวกับ</a>
-      <a href="#" class="nav-link">ผลงาน</a>
-      <a href="#" class="nav-link">ติดต่อ</a>
+      <a href="#" class="nav-link">Dashboard</a>
+      <a href="#" class="nav-link">Reports</a>
+      <a href="#" class="nav-link">Settings</a>
+      <a href="#" class="nav-link">Profile</a>
       <button class="theme-toggle" (click)="toggleDarkMode()">
         <span class="material-symbols-outlined">
-          {{ isDarkMode ? 'partly_cloudy_day' : 'partly_cloudy_night' }}
+          {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
         </span>
       </button>
     </div>
   </nav>
 
   <div class="content">
-    <h1 class="filter-btn">ผลงานของฉัน</h1>
-    <p class="subtitle">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
-      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-    </p>
+    <h1>Sales Analytics Dashboard</h1>
 
-    <div class="filters">
-      <button class="filter-btn active">All</button>
-      <button class="filter-btn">Web</button>
-      <button class="filter-btn">Mobile</button>
-      <button class="filter-btn">Design</button>
+    <div class="upload-section">
+      <label for="file-upload" class="upload-label">
+        <span class="material-symbols-outlined">upload_file</span>
+        Upload Sales Data
+      </label>
+      <input 
+        type="file" 
+        id="file-upload" 
+        (change)="onFileSelected($event)" 
+        accept=".csv,.xlsx,.xls"
+        [disabled]="isLoading"
+      >
     </div>
 
-    <div class="project-grid">
-      <div class="project-card">
-        <div class="project-image">E-commerce Project</div>
-        <div class="project-content">
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et...</p>
-          <div class="tech-stack">
-            <span class="tech-tag">React</span>
-            <span class="tech-tag">Node.js</span>
-            <span class="tech-tag">MongoDB</span>
-            <span class="tech-tag">Tailwind CSS</span>
-          </div>
-        </div>
+    <div *ngIf="isLoading" class="loading">
+      <span class="material-symbols-outlined spinning">sync</span>
+      Processing your data...
+    </div>
+
+    <div class="controls-section">
+      <div class="file-selection">
+        <label for="file-select">Select Data File:</label>
+        <select *ngIf="userFiles.length > 0" [(ngModel)]="selectedFile" (ngModelChange)="onFileSelect($event)" class="form-control">
+          <option value="">Choose a file</option>
+          <option *ngFor="let file of userFiles" [value]="file.file_id">
+            {{ file.filename }}
+          </option>
+        </select>
       </div>
 
-      <div class="project-card">
-        <div class="project-image">Task Management</div>
-        <div class="project-content">
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et...</p>
-          <div class="tech-stack">
-            <span class="tech-tag">React</span>
-            <span class="tech-tag">Firebase</span>
-            <span class="tech-tag">Redux</span>
-            <span class="tech-tag">Material-UI</span>
-          </div>
-        </div>
+      <div class="product-selection" *ngIf="availableProducts.length > 0">
+        <label for="product-select">Select Product:</label>
+        <select [(ngModel)]="selectedProduct" (change)="fetchDashboardSummary()" class="form-control">
+          <option value="">All Products</option>
+          <option *ngFor="let product of availableProducts" [value]="product.Product">
+            {{ product.Product }}
+          </option>
+        </select>
       </div>
 
-      <div class="project-card">
-        <div class="project-image">Travel Website</div>
-        <div class="project-content">
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et...</p>
-          <div class="tech-stack">
-            <span class="tech-tag">Next.js</span>
-            <span class="tech-tag">Prisma</span>
-            <span class="tech-tag">PostgreSQL</span>
-            <span class="tech-tag">Framer Motion</span>
-          </div>
+      <div class="month-selection" *ngIf="selectedReportType === 'daily'">
+        <label for="month-select">Select Month:</label>
+        <select [(ngModel)]="selectedMonth" (change)="onMonthSelect(selectedMonth)" class="form-control">
+          <option value="" disabled selected>Select a month</option>
+          <option *ngFor="let month of availableMonths" [value]="month">
+            {{ month }}
+          </option>
+        </select>
+      </div>
+
+      <div class="report-type-filters">
+        <button 
+          [class.active]="selectedReportType === 'daily'"
+          (click)="setReportType('daily')"
+          class="filter-btn">
+          Daily
+        </button>
+        <button 
+          [class.active]="selectedReportType === 'monthly'"
+          (click)="setReportType('monthly')"
+          class="filter-btn">
+          Monthly
+        </button>
+        <button 
+          [class.active]="selectedReportType === 'yearly'"
+          (click)="setReportType('yearly')"
+          class="filter-btn">
+          Yearly
+        </button>
+        <button 
+          [class.active]="selectedReportType === 'compare_trends'"
+          (click)="setReportType('compare_trends')"
+          class="filter-btn">
+          Compare
+        </button>
+        <button 
+          [class.active]="selectedReportType === 'forecast'"
+          (click)="setReportType('forecast')"
+          class="filter-btn">
+          Forecast
+        </button>
+      </div>
+
+      <div class="forecast-controls" *ngIf="selectedReportType === 'forecast'">
+        <label for="forecast-periods">Forecast Range:</label>
+        <select 
+          id="forecast-periods"
+          [(ngModel)]="selectedForecastPeriods"
+          (change)="fetchDashboardSummary()"
+          class="form-control">
+          <option *ngFor="let period of forecastPeriods" [value]="period">
+            {{ period }} Periods
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="summary" class="chart-container">
+      <canvas #salesChart></canvas>
+    </div>
+
+    <div *ngIf="summary.top_products" class="top-products">
+      <h2>Top Performing Products</h2>
+      <div class="products-grid">
+        <div *ngFor="let product of summary.top_products" class="product-card">
+          <h3>{{ product.Product }}</h3>
+          <p>Total Sales: ฿{{ product["Total Sales"].toLocaleString() }}</p>
         </div>
       </div>
     </div>

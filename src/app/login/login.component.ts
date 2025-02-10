@@ -3,7 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { ThemeService } from '../services/theme.service';
+import { AuthService } from '../services/auth.service';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+interface LoginResponse {
+  token: string;
+}
 
 @Component({
   selector: 'app-login',
@@ -28,6 +33,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private router: Router,
     private themeService: ThemeService,
+    private authService: AuthService,
     private http: HttpClient
   ) {}
 
@@ -46,10 +52,11 @@ export class LoginComponent implements OnInit {
     formData.append('username', this.loginData.username);
     formData.append('password', this.loginData.password);
 
-    this.http.post('https://aa57-49-237-35-95.ngrok-free.app/login', formData)
+    this.http.post<LoginResponse>(`${environment.BASE_URL}/login`, formData)
       .subscribe({
         next: (response) => {
           console.log('Login successful:', response);
+          this.authService.setToken(response.token);
           this.router.navigate(['/home']);
         },
         error: (error) => {
