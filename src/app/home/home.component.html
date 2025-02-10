@@ -100,6 +100,27 @@
         </button>
       </div>
 
+      <div class="report-type-filters" *ngIf="isCompare">
+        <button 
+          [class.active]="selectedReportType1 === 'daily'"
+          (click)="setReportType1('daily')"
+          class="filter-btn1">
+          Daily
+        </button>
+        <button 
+          [class.active]="selectedReportType1 === 'monthly'"
+          (click)="setReportType1('monthly')"
+          class="filter-btn1">
+          Monthly
+        </button>
+        <button 
+          [class.active]="selectedReportType1 === 'yearly'"
+          (click)="setReportType1('yearly')"
+          class="filter-btn1">
+          Yearly
+        </button>
+      </div>
+      
       <div class="forecast-controls" *ngIf="selectedReportType === 'forecast'">
         <label for="forecast-periods">Forecast Range:</label>
         <select 
