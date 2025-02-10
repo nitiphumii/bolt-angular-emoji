@@ -161,6 +161,10 @@ h1::after {
   box-shadow: 0 6px 16px rgba(108, 92, 231, 0.3);
 }
 
+input[type="file"] {
+  display: none;
+}
+
 .loading {
   display: flex;
   align-items: center;
