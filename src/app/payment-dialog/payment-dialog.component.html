@@ -1,0 +1,23 @@
+<div class="payment-dialog-overlay" (click)="close.emit()">
+  <div class="payment-dialog" (click)="$event.stopPropagation()">
+    <h2>Buy Points</h2>
+    <div class="amount-options">
+      <button 
+        *ngFor="let value of [100, 500, 1000]" 
+        [class.selected]="amount === value"
+        (click)="selectAmount(value)"
+        class="amount-option">
+        {{ value }} THB
+      </button>
+    </div>
+    <div class="buttons">
+      <button class="cancel" (click)="close.emit()">Cancel</button>
+      <button class="confirm" (click)="processPayment()" [disabled]="!amount || isProcessing">
+        {{ isProcessing ? 'Processing...' : 'Confirm Payment' }}
+      </button>
+    </div>
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+  </div>
+</div>

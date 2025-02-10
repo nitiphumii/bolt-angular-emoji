@@ -3,8 +3,11 @@
     <div class="logo">Sales Analytics</div>
     <div class="nav-links">
       <a href="#" class="nav-link">Dashboard</a>
-      <a href="#" class="nav-link">Payment</a>
-      <a href="#" class="nav-link">Profile</a>
+      <span class="nav-link" (click)="openPaymentDialog()">Payment</span>
+      <div class="points">
+        <span class="point-icon">Point:</span>
+        <span class="point-text">{{ userPoints }}</span>
+      </div>
       <a href="#" class="nav-link">Logout</a>
       <button class="theme-toggle" (click)="toggleDarkMode()">
         <span class="material-symbols-outlined">
@@ -57,7 +60,7 @@
         </select>
       </div>
 
-      <div class="month-selection" *ngIf="selectedReportType === 'daily'">
+      <div class="month-selection" *ngIf="selectedReportType === 'daily' || selectedReportType1 === 'daily'">
         <label for="month-select">Select Month:</label>
         <select [(ngModel)]="selectedMonth" (change)="onMonthSelect(selectedMonth)" class="form-control">
           <option value="" disabled selected>Select a month</option>
@@ -149,4 +152,11 @@
       </div>
     </div>
   </div>
+  
+  <!-- Rest of your existing template -->
+
+  <app-payment-dialog 
+    *ngIf="showPaymentDialog"
+    (close)="closePaymentDialog()"
+  ></app-payment-dialog>
 </div>

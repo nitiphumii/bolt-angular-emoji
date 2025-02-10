@@ -96,6 +96,34 @@
   transform: rotate(15deg);
 }
 
+.points {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: #64748b;
+  gap: 5px; 
+}
+
+.point-icon {
+  font-size: 16px; 
+}
+
+.point-text {
+  font-size: 16px;
+}
+
+.dark-mode .points {
+  color: #94a3b8; 
+}
+
+.dark-mode .point-icon {
+  color: #94a3b8;
+}
+
+.dark-mode .point-text {
+  color: #94a3b8; 
+}
+
 .content {
   max-width: 1400px;
   margin: 0 auto;
@@ -267,7 +295,7 @@ input[type="file"] {
 .dark-mode .filter-btn1 {
   background: #1e293b;
   border-color: #8f7ff7;
-  color: #ffffff;
+  color: #fff;
 }
 
 .filter-btn:hover,

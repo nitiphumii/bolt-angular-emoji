@@ -9,12 +9,18 @@ import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../environments/environment';
+import { PaymentDialogComponent } from '../payment-dialog/payment-dialog.component';
 Chart.register(...registerables);
+
+interface UserInfo {
+  username: string;
+  points: number;
+}
 
 interface DashboardSummary {
   daily_sales?: Array<{ Date: string; "Total Sales": number; "Quantity Sold": number }>;
   monthly_sales?: Array<{ Date: string; "Total Sales": number; "Growth Rate (%)": number; "Quantity Sold": number }>;
-  yearly_sales?: Array<{ Date: string; "Total Sales": number; "Growth Rate (%)": number }>;
+  yearly_sales?: Array<{ Date: string; "Total Sales": number; "Growth Rate (%)": number; "Quantity Sold": number }>;
   top_products?: Array<{ Product: string; "Total Sales": number }>;
   compare_trends?: Array<{ Date: string; Product: string; "Total Sales": number; "Quantity Sold": number}>;
   forecast?: Array<{ Date: string; "Forecasted Sales": number }>;
@@ -32,11 +38,12 @@ type ReportType = 'daily' | 'monthly' | 'yearly' | 'top_products' | 'compare_tre
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaymentDialogComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
+  userPoints: number = 0;
   isDarkMode = false;
   isLoading = false;
   isCompare = false;
@@ -51,6 +58,7 @@ export class HomeComponent implements OnInit {
   availableMonths: string[] = [];
   selectedForecastPeriods: number = 3;
   forecastPeriods: number[] = Array.from({length: 10}, (_, i) => i + 2);
+  showPaymentDialog = false;
 
   @ViewChild('salesChart') salesChartRef!: ElementRef;
   @ViewChild('forecastChart') forecastChartRef!: ElementRef;
@@ -71,9 +79,33 @@ export class HomeComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.getUserInfo();
     this.getFiles();
     this.initializeMonths();
   }
+
+  getUserInfo() {
+  const headers = new HttpHeaders({
+    'Authorization': `Bearer ${this.authService.getToken()}`,
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true'
+  });
+
+  this.http.get<{ user_info: { points: number; username: string } }>(
+    `${environment.BASE_URL}/user_info/`,
+    { headers }
+  ).pipe(
+    catchError(this.handleError.bind(this))
+  ).subscribe({
+    next: (response) => {
+      console.log("User Info API Response:", response); 
+      this.userPoints = response.user_info.points; 
+    },
+    error: (error) => {
+      console.error('Failed to fetch user info:', error);
+    }
+  });
+}
 
   initializeMonths() {
     if (!this.summary || !this.summary.daily_sales) {
@@ -180,6 +212,7 @@ export class HomeComponent implements OnInit {
       this.isCompare = true;
     } else {
       this.isCompare = false;
+      this.setReportType1('monthly')
     }
     if (this.selectedFile) {
       this.fetchDashboardSummary();
@@ -284,26 +317,34 @@ export class HomeComponent implements OnInit {
 
     if (this.salesChartRef) {
       const ctx = this.salesChartRef.nativeElement.getContext('2d');
+      let labels: string[] = [];
+      let data: any[] = [];
+      let title = '';
       
       if (this.selectedReportType === 'compare_trends' && this.summary.compare_trends) {
-        const productGroups = this.summary.compare_trends.reduce((groups: { [key: string]: any[] }, item) => {
-          const product = item.Product;
-          if (!groups[product]) {
-            groups[product] = [];
-          }
-          groups[product].push(item);
-          return groups;
-        }, {});
+  let filteredTrends = this.summary.compare_trends;
 
-        const dates = [...new Set(this.summary.compare_trends.map(item => item.Date))];
+  // ✅ ถ้าอยู่ในโหมด Daily และเลือกเดือน กรองข้อมูลตามเดือน
+  if (this.selectedReportType1 === 'daily' && this.selectedMonth) {
+    filteredTrends = filteredTrends.filter(item => item.Date.startsWith(this.selectedMonth));
+  }
 
-        const datasets = Object.entries(productGroups).map(([product, data], index) => ({
-          label: product,
-          data: data.map(item => item["Total Sales"]),
-          borderColor: this.getColor(index),
-          backgroundColor: this.getColor(index, 0.2),
-          fill: false,
-          tension: 0.4
+  const productGroups = filteredTrends.reduce((groups: { [key: string]: any[] }, item) => {
+    const product = item.Product;
+    if (!groups[product]) groups[product] = [];
+    groups[product].push(item);
+    return groups;
+  }, {});
+
+  const dates = [...new Set(filteredTrends.map(item => item.Date))];
+
+  const datasets = Object.entries(productGroups).map(([product, data], index) => ({
+    label: product,
+    data: data.map(item => item["Total Sales"]),
+    borderColor: this.getColor(index),
+    backgroundColor: this.getColor(index, 0.2),
+    fill: false,
+    tension: 0.4
         }));
 
         this.salesChart = new Chart(ctx, {
@@ -393,27 +434,34 @@ export class HomeComponent implements OnInit {
         let labels: string[] = [];
         let data: number[] = [];
         let title = '';
+        let quantityData: number[] = [];
+        let filteredData: any[] = [];
 
         switch (this.selectedReportType) {
           case 'daily':
             if (this.summary.daily_sales) {
-              const filteredData = this.summary.daily_sales.filter(sale => sale.Date.startsWith(this.selectedMonth));
+              filteredData = this.summary.daily_sales.filter(sale => sale.Date.startsWith(this.selectedMonth));
               labels = filteredData.map(sale => sale.Date);
               data = filteredData.map(sale => sale["Total Sales"]);
+              quantityData = filteredData.map(sale => sale["Quantity Sold"]);
               title = `Daily Sales ${this.selectedMonth ? `- ${this.selectedMonth}` : ''}`;
             }
             break;
           case 'monthly':
             if (this.summary.monthly_sales) {
+              filteredData = this.summary.monthly_sales;
               labels = this.summary.monthly_sales.map(sale => sale.Date);
               data = this.summary.monthly_sales.map(sale => sale["Total Sales"]);
+              quantityData = filteredData.map(sale => sale["Quantity Sold"]);
               title = 'Monthly Sales';
             }
             break;
           case 'yearly':
             if (this.summary.yearly_sales) {
+              filteredData = this.summary.yearly_sales;
               labels = this.summary.yearly_sales.map(sale => sale.Date);
               data = this.summary.yearly_sales.map(sale => sale["Total Sales"]);
+              quantityData = filteredData.map(sale => sale["Quantity Sold"]);
               title = 'Yearly Sales';
             }
             break;
@@ -439,6 +487,44 @@ export class HomeComponent implements OnInit {
                 title: {
                   display: true,
                   text: title
+                },
+                legend: {
+                  display: true
+                },
+                tooltip: {
+                  callbacks: {
+                    label: (tooltipItem) => {
+                      const datasets = tooltipItem.chart.data.datasets; 
+                      const index = tooltipItem.dataIndex;
+                      let totalSales = filteredData?.[index]?.["Total Sales"] ?? 0;
+                      let quantitySold = filteredData?.[index]?.["Quantity Sold"] ?? 0;
+
+                       if (this.selectedReportType === 'compare_trends') {
+        const product = datasets[tooltipItem.datasetIndex].label;
+        totalSales = datasets[tooltipItem.datasetIndex].data[index] ?? 0;
+        return [`${product}: ${totalSales.toLocaleString()}`];
+      } else {
+        totalSales = filteredData?.[index]?.["Total Sales"] ?? 0;
+        quantitySold = filteredData?.[index]?.["Quantity Sold"] ?? 0;
+              
+                      return [`Total Sales: ${totalSales.toLocaleString()}`, `Quantity Sold: ${quantitySold.toLocaleString()}`];}
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Total Sales'
+                  }
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: this.selectedReportType === 'daily' ? 'Date' : this.selectedReportType === 'monthly' ? 'Month' : 'Year'
+                  }
                 }
               }
             }
@@ -475,5 +561,15 @@ export class HomeComponent implements OnInit {
       return throwError(() => new Error('Network error occurred'));
     }
     return throwError(() => new Error(error.error?.message || 'An unexpected error occurred'));
+  }
+
+  openPaymentDialog() {
+    this.showPaymentDialog = true;
+  }
+
+  closePaymentDialog() {
+    this.showPaymentDialog = false;
+    // Refresh user info to update points
+    this.getUserInfo();
   }
 }
