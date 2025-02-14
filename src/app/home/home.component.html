@@ -1,6 +1,6 @@
 <div class="container" [ngClass]="{ 'dark-mode': isDarkMode }">
   <nav class="navbar">
-    <div class="logo">Sales Analytics</div>
+    <div class="logo">AI-Driven Sales Forecasting</div>
     <div class="nav-links">
       <a href="#" class="nav-link">Dashboard</a>
       <span class="nav-link" (click)="openPaymentDialog()">Payment</span>
@@ -23,7 +23,7 @@
     <div class="upload-section">
       <label for="file-upload" class="upload-label">
         <span class="material-symbols-outlined">upload_file</span>
-        Upload Sales Data
+        Upload Sales Data (100 Points)
       </label>
       <input 
         type="file" 
@@ -32,11 +32,22 @@
         accept=".csv,.xlsx,.xls"
         [disabled]="isLoading"
       >
+      <div class="file-requirements">
+        <p class="requirements-title">Required File Format:</p>
+        <ul class="requirements-list">
+          <li><strong>Date:</strong> Transaction date (D-M-YYYY)</li>
+          <li><strong>Product:</strong> Product name</li>
+          <li><strong>Quantity:</strong> Number of units sold</li>
+          <li><strong>Price:</strong> Price per unit</li>
+        </ul>
+      </div>
     </div>
 
-    <div *ngIf="isLoading" class="loading">
-      <span class="material-symbols-outlined spinning">sync</span>
-      Processing your data...
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="loading-popup">
+        <span class="material-symbols-outlined loading-spinner">sync</span>
+        <span class="loading-text">Processing your data...</span>
+      </div>
     </div>
 
     <div class="controls-section">
@@ -60,7 +71,7 @@
         </select>
       </div>
 
-      <div class="month-selection" *ngIf="selectedReportType === 'daily' || selectedReportType1 === 'daily'">
+      <!-- <div class="month-selection" *ngIf="selectedReportType === 'daily' || selectedReportType1 === 'daily'">
         <label for="month-select">Select Month:</label>
         <select [(ngModel)]="selectedMonth" (change)="onMonthSelect(selectedMonth)" class="form-control">
           <option value="" disabled selected>Select a month</option>
@@ -68,7 +79,19 @@
             {{ month }}
           </option>
         </select>
-      </div>
+      </div> -->
+
+      <div class="month-selection" *ngIf="selectedReportType === 'daily' || selectedReportType1 === 'daily'">
+  <label for="date-range">Select Date Range:</label>
+  <div class="date-picker-wrapper">
+    <input
+      type="text"
+      #dateRangePicker
+      class="date-range-input"
+      placeholder="Select date range"
+      readonly>
+  </div>
+</div>
 
       <div class="report-type-filters">
         <button 
@@ -138,9 +161,29 @@
       </div>
     </div>
 
+    <div *ngIf="ai_summary" class="ai-summary">
+      <div class="ai-summary-content">{{ ai_summary }}</div>
+      
+      <!-- Input สำหรับคำถามเพิ่มเติม -->
+      <input type="text" [(ngModel)]="new_query"  placeholder="Enter your question..." class="query-input" />
+    
+      <!-- ปุ่มสำหรับส่ง Updated Context ไปที่ API -->
+      <button (click)="sendUpdatedContext()" class="filter-btn">
+        Continue AI Analysis
+      </button>
+    </div>
+
+
+    
     <div *ngIf="summary" class="chart-container">
       <canvas #salesChart></canvas>
     </div>
+
+    <button 
+      (click)="Gensummary()"
+      class="filter-btn">
+      AI summary
+    </button>
 
     <div *ngIf="summary.top_products" class="top-products">
       <h2>Top Performing Products</h2>
@@ -153,8 +196,6 @@
     </div>
   </div>
   
-  <!-- Rest of your existing template -->
-
   <app-payment-dialog 
     *ngIf="showPaymentDialog"
     (close)="closePaymentDialog()"

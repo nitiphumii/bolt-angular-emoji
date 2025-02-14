@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
+import { ThemeService } from '../services/theme.service';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -17,15 +18,20 @@ export class PaymentDialogComponent implements OnInit {
   username: string = '';
   isProcessing: boolean = false;
   error: string = '';
+  isDarkMode: boolean = false;
   @Output() close = new EventEmitter<void>();
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private themeService: ThemeService
   ) {}
 
   ngOnInit() {
     this.getUserInfo();
+    this.themeService.darkMode$.subscribe(
+      isDark => this.isDarkMode = isDark
+    );
   }
 
   getUserInfo() {
@@ -83,9 +89,7 @@ export class PaymentDialogComponent implements OnInit {
       next: (response) => {
         this.isProcessing = false;
         if (response.payment_link) {
-          // Open payment link in a new tab
           window.open(response.payment_link, '_blank');
-          // Close the dialog
           this.close.emit();
         }
       },
